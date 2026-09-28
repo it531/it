@@ -67,7 +67,7 @@ export async function newVisit(onDone, preset = {}) {
     try {
       const v = await api.post('/opd/visit', { patient_id: patient.id, doctor_id: Number($('#nv-doc', m.el).value), visit_type: $('#nv-type', m.el).value, chief_complaint: $('#nv-cc', m.el).value });
       m.el.remove(); tokenIssued(v, patient.full_name, patient.uhid); onDone && onDone();
-    } catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); }
+    } catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
   };
 }
 
@@ -112,7 +112,7 @@ async function doctorQueue(ctx) {
         <div class="kpis c3"><div class="kpi"><div class="label">Waiting</div><div class="value">${q.waiting.length}</div></div><div class="kpi"><div class="label">Completed</div><div class="value">${q.completed.length}</div></div><div class="kpi"><div class="label">Avg wait</div><div class="value">${q.avg_wait_min != null ? q.avg_wait_min : '—'}<small>min</small></div></div></div>
         <div class="panel"><div class="panel-head"><h3>Completed today</h3></div><div class="panel-body flush list">${q.completed.map((w) => `<a class="list-row click" href="/opd/consult/${w.id}"><span class="token-pill ghost">${esc(w.token)}</span><div class="grow"><div class="cell-main truncate">${esc(w.full_name)}</div><div class="cell-sub">${esc(w.uhid)} · ${ftime(w.completed_at)}</div></div>${icon('chevronRight')}</a>`).join('') || `<div class="panel-body muted small">No completed consultations yet.</div>`}</div></div>
       </div></div>`;
-    $('#call-next').onclick = async (e) => { e.currentTarget.classList.add('loading'); try { const n = await api.post(`/opd/queue/${doctorId}/call-next`); toast(`Calling ${n.token} — ${n.full_name}`); navigate(`/opd/consult/${n.id}`); } catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); } };
+    $('#call-next').onclick = async (e) => { e.currentTarget.classList.add('loading'); try { const n = await api.post(`/opd/queue/${doctorId}/call-next`); toast(`Calling ${n.token} — ${n.full_name}`); navigate(`/opd/consult/${n.id}`); } catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); } };
     $$('[data-call]', el).forEach((b) => (b.onclick = async () => { try { const n = await api.post(`/opd/queue/${doctorId}/call-next`, { visit_id: Number(b.dataset.call) }); navigate(`/opd/consult/${n.id}`); } catch (err) { toast(err.message, 'error'); } }));
   };
   await load();

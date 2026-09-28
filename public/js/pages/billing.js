@@ -75,7 +75,7 @@ export function paymentModal(inv, onDone) {
       modal({ title: 'Payment recorded', size: 'sm', body: `<div style="text-align:center"><div class="eyebrow">Receipt</div><div class="mono strong" style="font-size:22px">${esc(r.receipt_no)}</div><div style="font-size:36px;font-weight:800;color:var(--green);margin-top:8px">${inr2(Number(d.amount))}</div><div class="small muted">Balance remaining ${inr2(r.invoice.balance)}</div></div>`,
         foot: `<a class="btn btn-secondary" href="/print/receipt/${r.id}" target="_blank">${icon('printer')}Print receipt</a><button class="btn btn-primary" data-close>Done</button>` });
       onDone && onDone(r);
-    } catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); }
+    } catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
   };
 }
 

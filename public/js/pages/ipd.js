@@ -64,7 +64,7 @@ export default async function ipd(ctx) {
       const d = formData($('#adm', m.el));
       e.currentTarget.classList.add('loading');
       try { const r = await api.post('/ipd/admission', { ...d, patient_id: patient.id, doctor_id: Number(d.doctor_id), bed_id: Number(d.bed_id) }); m.el.remove(); toast(`Admitted — ${r.ipd_no}`, 'success', 'IPD number generated'); navigate(`/ipd/${r.id}`); }
-      catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); }
+      catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
     };
   }
   $('#admit')?.addEventListener('click', () => admit());
@@ -151,7 +151,7 @@ async function admissionPage(ctx) {
       const d = formData($('#df', m.el)); if (d.discount) d.discount = Number(d.discount); else delete d.discount;
       e.currentTarget.classList.add('loading');
       try { const r = await api.post(`/ipd/admissions/${a.id}/discharge`, d); m.el.remove(); toast('Discharged — final bill generated, bed sent for cleaning'); navigate(`/billing/${r.invoice_id}`); }
-      catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); }
+      catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
     };
   });
   $('#transfer')?.addEventListener('click', async () => {

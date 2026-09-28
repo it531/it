@@ -9,7 +9,8 @@ const greet = () => { const h = new Date().getHours(); return h < 12 ? 'Good mor
 
 export default async function dashboard(ctx) {
   const me = session.me;
-  const name = me.user.is_super_admin ? 'Administrator' : me.doctor ? me.user.full_name : me.user.full_name.split(' ')[0];
+  const tm = me.user.full_name.match(/^(Dr\.?|Mr\.?|Mrs\.?|Ms\.?|Sr\.?)\s+(\S+)/i);
+  const name = me.user.is_super_admin ? 'Administrator' : tm ? `${tm[1]} ${tm[2]}` : me.user.full_name.split(' ')[0];
   const el = page({
     title: `${greet()}, ${name}`, subtitle: `${esc(me.hospital.name)} · ${new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`,
     hero: { img: me.doctor ? '/img/consultation.jpg' : can('pharmacy') && !can('opd') ? '/img/pharmacy.jpg' : '/img/reception.jpg', eyebrow: `${me.roles.map((r) => r.name).join(' · ') || 'Dashboard'}`, stats: '<div class="hero-stats" id="hero-stats"></div>' },
@@ -114,7 +115,7 @@ function doctorSection(d) {
   $('#dash-call', wrap).onclick = async (e) => {
     e.currentTarget.classList.add('loading');
     try { const n = await api.post(`/opd/queue/${session.me.doctor.id}/call-next`); toast(`Calling ${n.token} — ${n.full_name}`); navigate(`/opd/consult/${n.id}`); }
-    catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); }
+    catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
   };
   return wrap;
 }

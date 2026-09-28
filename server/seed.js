@@ -54,7 +54,7 @@ function masters(hid, { doctors = D.DOCTORS, full = true } = {}) {
   const meds = {};
   D.MEDICINES.forEach(([name, generic_name, brand, strength, dosage_form, manufacturer, category, pp, sp, min, route, gst, hsn], i) => {
     const id = db.insertRow('medicines', { hospital_id: hid, name, generic_name, brand, strength, dosage_form, manufacturer, category, hsn, gst_rate: gst, purchase_price: pp, selling_price: sp, min_stock: full ? min : Math.ceil(min / 3), supplier_id: sup[i % 2], storage: /Insulin|Enoxaparin/.test(name) ? '2–8°C (refrigerate)' : 'Below 25°C', default_route: route, created_at: t });
-    meds[name] = { id, name, strength, sp, pp, min: full ? min : Math.ceil(min / 3), supplier: sup[i % 2] };
+    meds[name] = { id, name, strength, sp, pp, form: dosage_form, min: full ? min : Math.ceil(min / 3), supplier: sup[i % 2] };
   });
   // Approved clinical templates (suggestions only).
   const admin = db.get("SELECT u.id FROM users u JOIN user_roles ur ON ur.user_id = u.id JOIN roles r ON r.id = ur.role_id WHERE u.hospital_id = ? AND r.key = 'hospital_admin'", hid);
@@ -219,7 +219,7 @@ function simulate(hid, M, { days, perDay: [lo, hi], labs = true, ipd = true, rad
       for (const dx of dxIds(uniq)) db.insertRow('visit_diagnoses', { hospital_id: hid, visit_id: visit.id, diagnosis_id: dx, doctor_id: doc.id, created_at: done });
       // Prescription
       let items = tmpl ? tmpl.items.map(([m, dose, frequency, duration_days, route, instructions]) => ({ m: M.meds[m], dose, frequency, duration_days, route, instructions }))
-        : Array.from({ length: ri(1, 3) }, () => { const m = pick(Object.values(M.meds).filter((x) => !/Injection|IV|Insulin|Enoxaparin|Saline|Ringer/.test(x.name))); return { m, dose: '1 tab', frequency: pick(['OD', 'BD', 'TDS']), duration_days: pick([3, 5, 7]), route: 'Oral', instructions: 'After food' }; });
+        : Array.from({ length: ri(1, 3) }, () => { const m = pick(Object.values(M.meds).filter((x) => !/Injection|IV|Insulin|Enoxaparin|Saline|Ringer/.test(x.name))); const dose = /Syrup|Suspension/.test(m.form) ? '10 ml' : /Gel|Cream/.test(m.form) ? 'Apply' : /Capsule/.test(m.form) ? '1 cap' : /Sachet/.test(m.form) ? '1 sachet' : /spray|Inhaler/i.test(m.form) ? '2 puffs' : '1 tab'; return { m, dose, frequency: pick(['OD', 'BD', 'TDS']), duration_days: pick([3, 5, 7]), route: /Gel|Cream/.test(m.form) ? 'Topical' : /spray/i.test(m.form) ? 'Nasal' : /Inhaler/.test(m.form) ? 'Inhalation' : 'Oral', instructions: /Gel|Cream/.test(m.form) ? 'Apply on affected area' : 'After food' }; });
       if (chance(0.08)) items = [];
       const rxNo = seq.formatted(hid, 'rx').value;
       const rxId = db.insertRow('prescriptions', { hospital_id: hid, rx_no: rxNo, visit_id: visit.id, patient_id: patient.id, doctor_id: doc.id, status: 'finalized', finalized_at: done, finalized_by: doc.user_id, created_at: called, updated_at: done });

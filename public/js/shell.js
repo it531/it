@@ -41,7 +41,7 @@ export function shell() {
         ${inHospital ? `<button class="icon-btn" id="notif-btn" aria-label="Notifications">${icon('bell')}<span class="dot-badge hidden" id="notif-count"></span></button>` : ''}
         <button class="profile-btn" id="profile-btn">${avatar(me.user.full_name, 'sm')}<div class="who"><b>${esc(me.user.full_name)}</b><span>${esc(me.roles.map((r) => r.name).join(', ') || 'User')}</span></div>${icon('chevronDown')}</button>
       </header>
-      ${me.user.uses_demo_password ? `<div class="callout warn" style="border-radius:0;margin:0">${icon('alert')}<div>You are signed in with the temporary demo password. <a href="#" id="chg-now"><b>Change it now</b></a> — production deployments must never use demo credentials.</div></div>` : ''}
+      ${me.user.uses_demo_password || me.user.must_change_password ? `<div class="callout warn" style="border-radius:0;margin:0">${icon('alert')}<div>${me.user.uses_demo_password ? 'You are signed in with the temporary demo password.' : 'Your password was set by an administrator.'} <a href="#" id="chg-now"><b>Change it now</b></a>${me.user.uses_demo_password ? ' — production deployments must never use demo credentials.' : '.'}</div></div>` : ''}
       <main class="content" id="content" tabindex="-1"></main>
     </div>
     ${inHospital ? `<nav class="staff-bottom">${bottomItems().map(([href, label, ic]) => `<a href="${href}">${icon(ic)}${esc(label)}</a>`).join('')}</nav>` : ''}
@@ -208,6 +208,6 @@ export function changePassword() {
     if (d.new_password !== d.confirm) return showErrors(f, { details: { confirm: 'Passwords do not match' } });
     e.currentTarget.classList.add('loading');
     try { await api.post('/auth/change-password', d); toast('Your password has been changed.'); m.close(); await reloadMe(); navigate(location.pathname + location.search, { replace: true }); }
-    catch (err) { showErrors(f, err); toast(err.message, 'error'); } finally { e.currentTarget?.classList.remove('loading'); }
+    catch (err) { showErrors(f, err); toast(err.message, 'error'); } finally { e.target.closest('button')?.classList.remove('loading'); }
   };
 }

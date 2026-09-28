@@ -2,7 +2,7 @@ import { api, session, setIdleTimeout } from '../core/api.js';
 import { navigate, query } from '../core/router.js';
 import { icon, LOGO } from '../core/icons.js';
 import { esc, $, $$, modal, toast } from '../core/ui.js';
-import { logout } from '../shell.js';
+import { logout, changePassword } from '../shell.js';
 
 const SLIDES = ['/img/reception.jpg', '/img/doctor.jpg', '/img/ward.jpg', '/img/operating-room.jpg'];
 
@@ -58,7 +58,7 @@ export default async function login() {
 
   $('#pw-toggle').onclick = () => { const p = $('#password'); const show = p.type === 'password'; p.type = show ? 'text' : 'password'; $('#pw-toggle').innerHTML = icon(show ? 'eyeOff' : 'eye'); };
   $('#forgot').onclick = (e) => { e.preventDefault(); modal({ title: 'Reset your password', size: 'sm', body: `<p class="muted">For security, staff passwords are reset by your hospital administrator from <b>Settings → Users</b>. After a reset you will be asked to set a new password at next sign-in.</p><div class="callout mt-16">${icon('shield')}<div>Deep Hospital never emails passwords. If you suspect your account is compromised, inform your administrator immediately.</div></div>`, foot: '<button class="btn btn-primary" data-close>Got it</button>' }); };
-  setTimeout(() => $('#username').focus(), 250);
+  setTimeout(() => $('#username')?.focus(), 250);
 
   $('#login-form').onsubmit = async (e) => {
     e.preventDefault();
@@ -78,6 +78,7 @@ export default async function login() {
       document.getElementById('app').innerHTML = '';
       toast(`Welcome, ${session.me.user.full_name}`, 'success');
       navigate(session.me.hospital ? (q.next || '/') : '/platform', { replace: true });
+      if (session.me.user.must_change_password) setTimeout(changePassword, 700);
     } catch (err) {
       errBox.innerHTML = `<div class="callout danger">${icon('alert')}<div>${esc(err.message)}</div></div>`;
       $('#password').select();

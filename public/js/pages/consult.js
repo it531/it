@@ -149,7 +149,7 @@ export default async function consult(ctx) {
   $('#lab-go')?.addEventListener('click', async (e) => {
     e.currentTarget.classList.add('loading');
     try { const r = await api.post(`/opd/visits/${vid}/lab-orders`, { test_ids: [...selTests], priority: $('#lab-pri').value }); r.forEach((o) => $('#ordered').insertAdjacentHTML('beforeend', `<div class="small">${icon('check')} ${esc(o.test)} · <span class="mono">${esc(o.order_no)}</span> — sent to laboratory</div>`)); selTests.clear(); $$('[data-test].on', inv).forEach((b) => b.classList.remove('on')); toast(`${r.length} test(s) sent to the lab queue`); }
-    catch (err) { toast(err.message, 'error'); } finally { e.currentTarget.classList.remove('loading'); e.currentTarget.disabled = true; }
+    catch (err) { toast(err.message, 'error'); } finally { e.target.closest('button')?.classList.remove('loading'); (e.target.closest('button') || {}).disabled = true; }
   });
   $('#rad-go')?.addEventListener('click', async () => { const [modality, study] = radOpts[Number($('#rad-sel').value)]; try { const r = await api.post(`/opd/visits/${vid}/radiology-orders`, { modality, study, clinical_info: state.chief_complaint }); $('#ordered').insertAdjacentHTML('beforeend', `<div class="small">${icon('check')} ${esc(modality)} · ${esc(study)} · <span class="mono">${esc(r.order_no)}</span></div>`); toast('Imaging ordered'); } catch (err) { toast(err.message, 'error'); } });
 

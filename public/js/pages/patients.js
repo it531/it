@@ -38,10 +38,10 @@ async function list(ctx) {
         box.innerHTML = empty({ title: params.q ? `No patient matches “${params.q}”` : 'No patients found', text: params.q ? 'Check the spelling or search by mobile number. New patient? Register them to generate a UHID.' : 'Adjust the filters above.', illo: 'search', action: can('patients', 'add') ? `<a class="btn btn-primary" href="/patients/new${params.q && !/\d/.test(params.q) ? `?name=${encodeURIComponent(params.q)}` : params.q && /^\d{10}$/.test(params.q) ? `?mobile=${params.q}` : ''}">${icon('userPlus')}Register new patient</a>` : '' });
         return;
       }
-      box.innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>Patient</th><th>UHID</th><th>Mobile</th><th>Last visit</th><th>Visits</th><th>Status</th><th></th></tr></thead><tbody>
+      box.innerHTML = `<div class="table-wrap"><table class="table"><thead><tr><th>Patient</th><th>UHID</th><th class="hm">Mobile</th><th class="hm">Last visit</th><th class="hm">Visits</th><th class="hm">Status</th><th class="hm"></th></tr></thead><tbody>
         ${r.rows.map((p) => `<tr class="click" data-id="${p.id}"><td><div class="row" style="gap:12px">${avatar(p.full_name)}<div><div class="cell-main">${esc(p.full_name)}</div><div class="cell-sub">${esc(ageSex(p))}${p.blood_group ? ` · ${esc(p.blood_group)}` : ''}${p.city ? ` · ${esc(p.city)}` : ''}</div></div></div></td>
-        <td class="mono strong">${esc(p.uhid)}</td><td class="num">${esc(p.mobile)}</td><td>${p.last_visit ? `${fdate(p.last_visit)}<div class="cell-sub">${esc(p.last_doctor || '')}</div>` : '<span class="muted">—</span>'}</td><td class="num">${p.visits}</td>
-        <td>${p.ipd_no ? badge('admitted', `IPD ${p.ipd_no}`) : '<span class="badge grey plain">OPD</span>'}</td><td class="r">${icon('chevronRight')}</td></tr>`).join('')}</tbody></table></div>
+        <td class="mono strong">${esc(p.uhid)}</td><td class="num hm">${esc(p.mobile)}</td><td class="hm">${p.last_visit ? `${fdate(p.last_visit)}<div class="cell-sub">${esc(p.last_doctor || '')}</div>` : '<span class="muted">—</span>'}</td><td class="num hm">${p.visits}</td>
+        <td class="hm">${p.ipd_no ? badge('admitted', `IPD ${p.ipd_no}`) : '<span class="badge grey plain">OPD</span>'}</td><td class="r hm">${icon('chevronRight')}</td></tr>`).join('')}</tbody></table></div>
         <div class="table-foot"><span>Showing ${offset + 1}–${offset + r.rows.length} of ${num(r.total)}</span><div class="btn-group"><button class="btn btn-secondary btn-sm" id="prev" ${offset ? '' : 'disabled'}>${icon('chevronLeft')}Prev</button><button class="btn btn-secondary btn-sm" id="next" ${offset + 25 < r.total ? '' : 'disabled'}>Next${icon('chevronRight')}</button></div></div>`;
       $('tbody', box).onclick = (e) => { const tr = e.target.closest('tr'); if (tr) navigate(`/patients/${tr.dataset.id}`); };
       $('#prev', box).onclick = () => { offset = Math.max(0, offset - 25); load(); };
@@ -161,7 +161,7 @@ async function success(out, body) {
       const v = await api.post('/opd/visit', { patient_id: out.id, doctor_id: Number($('#s-doc', m.el).value), visit_type: $('input[name=vt]:checked', m.el).value });
       m.el.remove();
       tokenIssued(v, `${body.first_name} ${body.last_name || ''}`, out.uhid);
-    } catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); }
+    } catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
   });
 }
 
@@ -233,7 +233,7 @@ async function profile(ctx) {
     $('#v-go', m.el).onclick = async (e) => {
       e.currentTarget.classList.add('loading');
       try { const v = await api.post('/opd/visit', { patient_id: p.id, doctor_id: Number($('#v-doc', m.el).value), visit_type: vt, chief_complaint: $('#v-cc', m.el).value }); m.el.remove(); tokenIssued(v, p.full_name, p.uhid); }
-      catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); }
+      catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
     };
   });
   $('#a-more').onclick = (e) => {
@@ -299,7 +299,7 @@ function editPatient(p) {
     if (!body.id_number) { delete body.id_type; delete body.id_number; }
     e.currentTarget.classList.add('loading');
     try { await api.put(`/patients/${p.id}`, body); toast('Patient details updated'); m.el.remove(); navigate(`/patients/${p.id}`, { replace: true }); }
-    catch (err) { showErrors(form, err); toast(err.message, 'error'); e.currentTarget?.classList.remove('loading'); }
+    catch (err) { showErrors(form, err); toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
   };
 }
 

@@ -413,7 +413,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 @keyframes drawerIn { from { transform: translateX(40px); opacity: 0; } }
 .drawer .modal-body { flex: 1; }
 
-.toasts { position: fixed; right: 22px; bottom: 22px; z-index: 120; display: flex; flex-direction: column; gap: 10px; width: min(380px, calc(100vw - 32px)); }
+.toasts { position: fixed; right: 22px; top: 82px; z-index: 120; display: flex; flex-direction: column; gap: 10px; width: min(380px, calc(100vw - 32px)); }
 .toast { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 16px; background: var(--ink); color: #fff; box-shadow: var(--shadow-lg); animation: toastIn .42s var(--ease-spring); font-size: 13.5px; }
 .toast.out { animation: toastOut .3s var(--ease) forwards; }
 .toast svg { width: 19px; height: 19px; flex-shrink: 0; margin-top: 1px; }
@@ -743,7 +743,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   .now-serving .token { font-size: 64px; }
   .modal { border-radius: 22px 22px 0 0; align-self: end; max-height: 92vh; }
   .backdrop { padding: 0; place-items: end center; }
-  .toasts { left: 16px; right: 16px; bottom: 84px; width: auto; }
+  .toasts { left: 16px; right: 16px; top: auto; bottom: 84px; width: auto; }
+  .table .hm { display: none; }
   .kpi .value { font-size: 23px; }
 }
 @media (min-width: 761px) { .staff-bottom { display: none; } }

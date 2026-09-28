@@ -23,7 +23,7 @@ export default async function platform(ctx) {
     <div class="grid g3" id="cards">${hs.map((h, i) => `<div class="panel hover hosp-card ${h.is_active ? '' : 'inactive'}" data-h="${h.id}">
       <div class="row"><div class="logo" style="background:${COLORS[i % COLORS.length]}">${esc(h.name.split(' ').map((w) => w[0]).slice(0, 2).join(''))}</div><div class="grow"><div class="cell-main">${esc(h.name)}</div><div class="cell-sub">${esc(h.code)} · ${esc(h.city || '')}</div></div>${badge(h.is_active ? 'active' : 'inactive', h.is_active ? 'Active' : 'Inactive')}</div>
       <div class="stats"><div><b>${num(h.patients)}</b><span>Patients</span></div><div><b>${num(h.users)}</b><span>Users</span></div><div><b>${num(h.opd_today)}</b><span>OPD today</span></div></div>
-      <div class="mods">${h.modules.filter((m) => !['dashboard', 'patients', 'settings', 'audit'].includes(m)).slice(0, 9).map((m) => `<span>${esc(titleCase(m))}</span>`).join('')}${h.modules.length > 13 ? `<span>+${h.modules.length - 13}</span>` : ''}</div>
+      <div class="mods">${h.modules.filter((m) => !['dashboard', 'patients', 'settings', 'audit'].includes(m)).slice(0, 9).map((m) => `<span>${esc((session.me.all_modules.find((x) => x.key === m) || { name: titleCase(m) }).name)}</span>`).join('')}${h.modules.length > 13 ? `<span>+${h.modules.length - 13}</span>` : ''}</div>
       <div class="row between small muted"><span>${esc(titleCase(h.plan))} plan · ${esc(h.subscription_status)}</span><span>Active ${h.last_activity_at ? ago(h.last_activity_at) : 'never'}</span></div>
       <div class="row" style="gap:8px"><button class="btn btn-primary btn-sm grow" data-enter="${h.id}" ${h.is_active ? '' : 'disabled'}>${icon('arrowRight')}Enter hospital</button><button class="btn btn-secondary btn-sm" data-manage="${h.id}">${icon('settings')}Manage</button></div></div>`).join('')}</div>
     <div class="grid g2 section"><div class="panel"><div class="panel-head"><div><h3>Network OPD · 14 days</h3><div class="sub">Visits per hospital</div></div></div><div class="panel-body" id="c-opd"></div></div>
@@ -69,7 +69,7 @@ async function addHospital() {
     body.admin = {}; $$('[data-a]', m.el).forEach((i) => (body.admin[i.dataset.a] = i.value.trim()));
     e.currentTarget.classList.add('loading');
     try { const r = await api.post('/platform/hospitals', body); toast(`${body.name} created — hospital admin: ${body.admin.username}`); m.el.remove(); navigate(`/platform/hospitals/${r.id}`); }
-    catch (err) { showErrors(f, err); toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); }
+    catch (err) { showErrors(f, err); toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
   };
 }
 

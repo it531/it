@@ -84,7 +84,7 @@ export default async function pharmacy(ctx) {
   $('#call-next').onclick = async (e) => {
     e.currentTarget.classList.add('loading');
     try { const n = await api.post('/pharmacy/call-next'); toast(`Now serving ${n.token} — ${n.patient_name}`); tab = 'queue'; $$('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.k === 'queue')); await queue(); renderServing(n.id); }
-    catch (err) { toast(err.message, 'info'); } finally { e.currentTarget.classList.remove('loading'); }
+    catch (err) { toast(err.message, 'info'); } finally { e.target.closest('button')?.classList.remove('loading'); }
   };
   $('#counter')?.addEventListener('click', counterSale);
   await render();

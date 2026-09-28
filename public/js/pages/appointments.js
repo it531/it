@@ -75,7 +75,7 @@ export default async function appointments(ctx) {
       body: `<div class="col gap-8"><div class="stat-line"><span class="muted">When</span><b>${fdate(a.scheduled_at)} · ${ftime(a.scheduled_at)}</b></div><div class="stat-line"><span class="muted">Doctor</span><b>${esc(a.doctor_name)}</b></div><div class="stat-line"><span class="muted">Status</span>${badge(a.status)}</div><div class="stat-line"><span class="muted">Source</span><b>${esc(a.source)}</b></div>${a.reason ? `<div class="stat-line"><span class="muted">Reason</span><b>${esc(a.reason)}</b></div>` : ''}${a.token ? `<div class="stat-line"><span class="muted">OPD token</span><b style="color:var(--brand)">${esc(a.token)}</b></div>` : ''}</div>`,
       foot: `<a class="btn btn-ghost" href="/patients/${a.patient_id}">Profile</a>${active && can('appointments', 'edit') ? `<button class="btn btn-secondary" data-st="cancelled">Cancel</button><button class="btn btn-secondary" data-st="no_show">No-show</button>${a.status === 'booked' ? '<button class="btn btn-secondary" data-st="confirmed">Confirm</button>' : ''}` : ''}${active && !a.visit_id && (can('opd', 'add') || can('reception', 'add')) ? `<button class="btn btn-primary" id="checkin">${icon('ticket')}Check in → token</button>` : ''}` });
     $$('[data-st]', m.el).forEach((b) => (b.onclick = async () => { if (b.dataset.st === 'cancelled' && !(await confirmDialog({ title: 'Cancel appointment?', message: 'The patient will be notified.', confirm: 'Cancel appointment', danger: true }))) return; try { await api.put(`/appointments/${a.id}`, { status: b.dataset.st }); toast('Appointment updated'); m.el.remove(); load(); } catch (err) { toast(err.message, 'error'); } }));
-    $('#checkin', m.el)?.addEventListener('click', async (e) => { e.currentTarget.classList.add('loading'); try { const v = await api.post(`/appointments/${a.id}/check-in`); m.el.remove(); tokenIssued(v, a.patient_name, a.uhid); load(); } catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); } });
+    $('#checkin', m.el)?.addEventListener('click', async (e) => { e.currentTarget.classList.add('loading'); try { const v = await api.post(`/appointments/${a.id}/check-in`); m.el.remove(); tokenIssued(v, a.patient_name, a.uhid); load(); } catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); } });
   }
 
   async function book(presetPatientId) {
@@ -97,7 +97,7 @@ export default async function appointments(ctx) {
     $('#b-go', m.el).onclick = async (e) => {
       e.currentTarget.classList.add('loading');
       try { const r = await api.post('/appointments', { patient_id: patient.id, doctor_id: Number($('#b-doc', m.el).value), scheduled_at: `${$('#b-date', m.el).value} ${slot}`, reason: $('#b-reason', m.el).value }); m.el.remove(); toast(`Appointment ${r.appt_no} booked — patient notified`); date = $('#b-date', m.el).value; load(); }
-      catch (err) { toast(err.message, 'error'); e.currentTarget.classList.remove('loading'); }
+      catch (err) { toast(err.message, 'error'); e.target.closest('button')?.classList.remove('loading'); }
     };
   }
   $('#new-appt')?.addEventListener('click', () => book());
