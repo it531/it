@@ -131,6 +131,7 @@ const attempts = new Map();
 function throttle(ip) {
   const t = Date.now(); const a = (attempts.get(ip) || []).filter((x) => t - x < 60e3);
   a.push(t); attempts.set(ip, a);
+  if (attempts.size > 5000) for (const [k, v] of attempts) if (!v.some((x) => t - x < 60e3)) attempts.delete(k);
   if (a.length > 20) throw new HttpError(429, 'Too many sign-in attempts. Please wait a minute.');
 }
 

@@ -195,6 +195,7 @@ test('steps 24–28: invoice, payment, patient receives documents, MIS and dashb
   assert.equal(opd.summary[0].value, 1);
   const rev = ok(await get('/api/reports/revenue_daily?preset=today', S.admin));
   assert.equal(rev.summary[0].value, inv.total + 500);
+  assert.equal((await get('/api/reports/revenue_daily?preset=today&department_id=abc&payment_mode=x;drop', S.admin)).status, 200, 'bad filters are ignored, not interpolated');
   const nl = ok(await post('/api/assistant/query', { q: 'Show me OPD patients today' }, S.admin));
   assert.equal(nl.report.key, 'opd_daily');
   const csv = await get('/api/reports/pharmacy_sales?preset=today&format=csv', S.admin);

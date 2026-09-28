@@ -159,7 +159,11 @@ function canReport(ctx, key) {
 }
 function filtersFrom(q) {
   const rg = range(q.preset, q.from, q.to);
-  return { from: rg.from, to: rg.to, preset: q.preset || null, department_id: q.department_id || null, doctor_id: q.doctor_id || null, patient_type: q.patient_type || null, payment_mode: q.payment_mode || null, status: q.status || null };
+  const int = (v) => (/^\d{1,9}$/.test(String(v || '')) ? Number(v) : null);
+  return { from: rg.from, to: rg.to, preset: q.preset || null, department_id: int(q.department_id), doctor_id: int(q.doctor_id),
+    patient_type: ['new', 'returning'].includes(q.patient_type) ? q.patient_type : null,
+    payment_mode: ['cash', 'upi', 'card', 'bank_transfer', 'other'].includes(q.payment_mode) ? q.payment_mode : null,
+    status: /^[a-z_]{1,30}$/.test(String(q.status || '')) ? q.status : null };
 }
 r.get('/reports', A, auth.hospital, (req, res) => {
   res.json({ catalogue: reports.catalogue().filter((c) => canReport(req.ctx, c.key)), saved: db.all('SELECT * FROM saved_reports WHERE hospital_id = ? AND (user_id = ? OR ?) ORDER BY name', req.ctx.hid, req.ctx.user.id, req.ctx.can('reports', 'edit') ? 1 : 0) });
