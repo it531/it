@@ -1,0 +1,38 @@
+import { api } from '../core/api.js';
+import { setQuery } from '../core/router.js';
+import { icon } from '../core/icons.js';
+import { esc, $, $$, inr, badge, empty, errorState, skeletonRows, toast, countUp, confirmDialog, modal } from '../core/ui.js';
+import { page, can } from '../shell.js';
+
+export default async function payroll(ctx) {
+  const lastMonth = (() => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })();
+  let month = ctx.query.month || lastMonth;
+  const el = page({ title: 'Payroll', subtitle: 'Monthly salary from structure + attendance (LOP, overtime) with PF, ESI and professional tax.',
+    actions: `<input class="input" type="month" id="mon" value="${month}" style="width:170px">${can('payroll', 'add') ? `<button class="btn btn-primary" id="run">${icon('refresh')}Process payroll</button>` : ''}` });
+  const load = async () => {
+    el.innerHTML = skeletonRows(10, 8);
+    let d;
+    try { d = await api.get(`/payroll?month=${month}`); } catch (err) { el.innerHTML = errorState(err); return; }
+    const tot = d.rows.reduce((a, r) => ({ gross: a.gross + r.gross, ded: a.ded + r.total_deductions, net: a.net + r.net_pay, pf: a.pf + r.pf, esi: a.esi + r.esi }), { gross: 0, ded: 0, net: 0, pf: 0, esi: 0 });
+    const allPaid = d.rows.length && d.rows.every((r) => r.status === 'paid');
+    el.innerHTML = `<div class="kpis c5">${[['Employees', d.rows.length], ['Gross', tot.gross, 'inr'], ['Deductions', tot.ded, 'inr'], ['Net payable', tot.net, 'inr', 'accent'], ['PF + ESI', tot.pf + tot.esi, 'inr']].map(([l, v, f, c]) => `<div class="kpi ${c || ''}"><div class="label">${l}</div><div class="value" data-count="${v}" ${f ? `data-fmt="${f}"` : ''}>0</div></div>`).join('')}</div>
+      <div class="panel section"><div class="panel-head"><div><h3>Payroll register · ${esc(month)}</h3><div class="sub">${d.rows.length ? (allPaid ? 'Paid' : 'Processed — mark as paid after bank transfer') : 'Not processed yet'}</div></div>${d.rows.length && !allPaid && can('payroll', 'approve') ? `<button class="btn btn-success btn-sm" id="paid">${icon('check')}Mark all paid</button>` : ''}</div>
+      <div class="panel-body flush">${d.rows.length ? `<div class="table-wrap"><table class="table"><thead><tr><th>Employee</th><th class="r">Paid days</th><th class="r">LOP</th><th class="r">Basic</th><th class="r">HRA + allow.</th><th class="r">OT</th><th class="r">Gross</th><th class="r">PF</th><th class="r">ESI</th><th class="r">PT</th><th class="r">LOP ded.</th><th class="r">Net pay</th><th>Status</th><th></th></tr></thead><tbody>${d.rows.map((r) => `<tr><td><div class="cell-main">${esc(r.full_name)}</div><div class="cell-sub">${esc(r.emp_code)} · ${esc(r.designation || '')}</div></td><td class="r num">${r.paid_days}/${r.working_days}</td><td class="r num">${r.lop_days}</td><td class="r num">${inr(r.basic)}</td><td class="r num">${inr(r.hra + r.allowances)}</td><td class="r num">${inr(r.overtime)}</td><td class="r num strong">${inr(r.gross)}</td><td class="r num">${inr(r.pf)}</td><td class="r num">${inr(r.esi)}</td><td class="r num">${inr(r.professional_tax)}</td><td class="r num">${inr(r.lop_deduction)}</td><td class="r num strong" style="color:var(--brand)">${inr(r.net_pay)}</td><td>${badge(r.status)}</td><td><a class="btn btn-ghost btn-sm" href="/print/payslip/${r.id}" target="_blank" title="Payslip">${icon('printer')}</a></td></tr>`).join('')}</tbody></table></div>` : empty({ title: `Payroll for ${month} has not been processed`, text: 'Processing uses each employee’s salary structure and attendance for the month.', action: can('payroll', 'add') ? `<button class="btn btn-primary" id="run2">${icon('refresh')}Process now</button>` : '' })}</div></div>
+      <div class="panel section"><div class="panel-head"><h3>Salary structures</h3><span class="small muted">${d.structures.filter((s) => s.basic == null).length} without structure</span></div><div class="panel-body flush"><table class="table compact"><thead><tr><th>Employee</th><th class="r">Basic</th><th class="r">HRA</th><th class="r">Allowances</th><th class="r">Monthly gross</th><th></th></tr></thead><tbody>${d.structures.map((s) => `<tr><td><div class="cell-main">${esc(s.full_name)}</div><div class="cell-sub">${esc(s.emp_code)} · ${esc(s.designation || '')}</div></td>${s.basic != null ? `<td class="r num">${inr(s.basic)}</td><td class="r num">${inr(s.hra)}</td><td class="r num">${inr(s.allowances)}</td><td class="r num strong">${inr(s.basic + s.hra + s.allowances)}</td>` : '<td colspan="4" class="muted small">Not configured</td>'}<td class="r">${can('payroll', 'edit') ? `<button class="btn btn-ghost btn-sm" data-edit="${s.employee_id}">${icon('edit')}</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>
+      ${d.months.length ? `<div class="panel section"><div class="panel-head"><h3>History</h3></div><div class="panel-body flush list">${d.months.map((x) => `<div class="list-row click" data-m="${x.month}"><b class="grow">${esc(x.month)}</b><span class="small muted">${x.n} employees</span><b>${inr(x.net)}</b></div>`).join('')}</div></div>` : ''}`;
+    countUp(el);
+    const run = async () => { if (!(await confirmDialog({ title: `Process payroll for ${month}?`, message: 'Existing unpaid entries for this month are recalculated. Paid entries are never changed.', confirm: 'Process' }))) return; try { const r = await api.post('/payroll/run', { month }); toast(`Payroll processed for ${r.processed} employees`); load(); } catch (err) { toast(err.message, 'error'); } };
+    $('#run2')?.addEventListener('click', run);
+    $('#paid')?.addEventListener('click', async () => { try { await api.post('/payroll/mark-paid', { month }); toast('Marked as paid'); load(); } catch (err) { toast(err.message, 'error'); } });
+    $$('[data-m]', el).forEach((r) => (r.onclick = () => { month = r.dataset.m; $('#mon').value = month; setQuery({ month }); load(); }));
+    $$('[data-edit]', el).forEach((b) => (b.onclick = () => {
+      const s = d.structures.find((x) => String(x.employee_id) === b.dataset.edit);
+      const keys = [['basic', 'Basic'], ['hra', 'HRA'], ['allowances', 'Allowances'], ['bonus', 'Bonus'], ['overtime_rate', 'OT ₹/hour'], ['pf_percent', 'PF %'], ['esi_percent', 'ESI %'], ['professional_tax', 'Professional tax'], ['other_deductions', 'Other deductions']];
+      const m = modal({ title: `Salary · ${s.full_name}`, body: `<div class="form-grid">${keys.map(([k, l]) => `<div class="field s4"><label>${l}</label><input class="input" type="number" step="0.01" data-k="${k}" value="${s[k] ?? { pf_percent: 12, esi_percent: 0.75, professional_tax: 200 }[k] ?? 0}"></div>`).join('')}</div>`, foot: '<button class="btn btn-secondary" data-close>Cancel</button><button class="btn btn-primary" id="sv">Save</button>' });
+      $('#sv', m.el).onclick = async () => { const body = {}; $$('[data-k]', m.el).forEach((i) => (body[i.dataset.k] = Number(i.value))); try { await api.put(`/payroll/structure/${s.employee_id}`, body); toast('Salary structure saved'); m.el.remove(); load(); } catch (err) { toast(err.message, 'error'); } };
+    }));
+  };
+  $('#mon').onchange = (e) => { month = e.target.value; setQuery({ month }); load(); };
+  $('#run')?.addEventListener('click', async () => { if (!(await confirmDialog({ title: `Process payroll for ${month}?`, message: 'Existing unpaid entries for this month are recalculated. Paid entries are never changed.', confirm: 'Process' }))) return; try { const r = await api.post('/payroll/run', { month }); toast(`Payroll processed for ${r.processed} employees`); load(); } catch (err) { toast(err.message, 'error'); } });
+  load();
+}
