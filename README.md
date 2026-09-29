@@ -16,6 +16,10 @@ Every step above is a real, database-backed workflow. It is exercised end-to-end
 
 Requirements: **Node.js 22.13+** (uses the built-in `node:sqlite`; no native build, no other database to install).
 
+**Easiest:** double-click **`start.bat`** (Windows) or run **`./start.sh`** (macOS/Linux). It checks Node, installs dependencies on first run, starts the server and opens the browser.
+
+Or manually:
+
 ```bash
 npm install
 npm run dev        # development: seeds demo data on first run, restarts on change
