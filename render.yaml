@@ -1,0 +1,23 @@
+# One-click hosting on Render (https://render.com) — free plan demo.
+# Demo data is created automatically on first start. On the free plan the disk is
+# temporary: the demo resets when the service restarts, and it sleeps when idle.
+services:
+  - type: web
+    name: deep-hospital
+    runtime: node
+    plan: free
+    branch: claude/deep-hospital-system-7hf7ai
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.14.0
+      - key: NODE_ENV
+        value: development
+      - key: SEED_DEMO
+        value: "true"
+      - key: TZ
+        value: Asia/Kolkata
+      - key: TRUST_PROXY
+        value: "true"

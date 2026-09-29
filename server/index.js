@@ -74,10 +74,14 @@ function bootstrap() {
 }
 
 if (require.main === module) {
-  bootstrap();
-  require('./lib/automation').start();
+  // Bind the port first so hosting platforms see the app as up while first-run
+  // demo data is created; requests simply wait until bootstrap finishes.
   const port = Number(process.env.PORT) || 3000;
-  createApp().listen(port, () => console.log(`Deep Hospital running on http://localhost:${port}`));
+  createApp().listen(port, () => {
+    bootstrap();
+    require('./lib/automation').start();
+    console.log(`Deep Hospital running on http://localhost:${port}`);
+  });
 }
 
 module.exports = { createApp, bootstrap };
